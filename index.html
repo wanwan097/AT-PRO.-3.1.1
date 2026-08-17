@@ -549,7 +549,7 @@
         });
 
         // ============================================================
-        // 7. LOGIN
+        // 7. LOGIN (DENGAN LOGOUT OTOMATIS + CLEAR STORAGE)
         // ============================================================
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -566,26 +566,28 @@
             try {
                 // Logout jika ada user yang sedang login
                 if (auth.currentUser) {
+                    console.log('🔄 Logout user sebelumnya:', auth.currentUser.email);
                     await signOut(auth);
-                    await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                // Bersihkan localStorage & sessionStorage
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    console.log('🧹 Storage dibersihkan');
+                } catch (e) {
+                    console.warn('Gagal clear storage:', e);
+                }
 
-                // Tampilkan modal sukses, redirect dilakukan setelah user klik OK
-                showModal(
-                    '✅',
-                    'Login Berhasil',
-                    `Selamat datang, ${userCredential.user.email}!`,
-                    'Lanjutkan',
-                    'success',
-                    () => {
-                        // Redirect akan ditangani oleh onAuthStateChanged
-                        // Tapi kita panggil ulang agar pasti
-                        handleRedirect(userCredential.user);
-                    }
-                );
+                // Tunggu agar proses benar-benar selesai
+                await new Promise(resolve => setTimeout(resolve, 500));
 
+                // Login dengan akun baru
+                console.log('🔐 Login dengan:', email);
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log('✅ Login berhasil untuk:', email);
+
+                // Redirect akan ditangani oleh onAuthStateChanged
                 loginForm.reset();
             } catch (error) {
                 console.error('Login error:', error);
@@ -594,6 +596,7 @@
                 else if (error.code === 'auth/wrong-password') msg += 'Password salah.';
                 else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
                 else if (error.code === 'auth/too-many-requests') msg += 'Terlalu banyak percobaan. Coba lagi nanti.';
+                else if (error.code === 'auth/network-request-failed') msg += 'Koneksi internet bermasalah.';
                 else msg += error.message;
                 showModal('❌', 'Login Gagal', msg, 'Coba Lagi', 'danger');
             } finally {
@@ -602,60 +605,61 @@
         });
 
         // ============================================================
-        // 8. FUNGSI REDIRECT (dengan replace agar tidak bisa back)
-        // ============================================================
-        function handleRedirect(user) {
-            if (!user) return;
-            
-            // Ambil data role dari Firestore
-            getDoc(doc(db, 'users', user.uid))
-                .then((userDoc) => {
-                    if (!userDoc.exists()) {
-                        showModal('⚠️', 'Data Tidak Ditemukan', 'Data akun tidak ditemukan.', 'OK', 'danger');
-                        return;
-                    }
-                    const data = userDoc.data();
-                    const role = data.role || 'owner';
-                    
-                    // Update lastLogin
-                    updateDoc(doc(db, 'users', user.uid), {
-                        lastLogin: new Date().toISOString()
-                    }).catch(err => console.warn('Gagal update lastLogin:', err));
-
-                    // Tentukan halaman tujuan
-                    let targetPage = '';
-                    switch (role) {
-                        case 'super_admin': targetPage = 'admin-dashboard.html'; break;
-                        case 'owner': targetPage = 'dashboard.html'; break;
-                        case 'cashier': targetPage = 'pos.html'; break;
-                        default: targetPage = 'dashboard.html';
-                    }
-
-                    // 🔥 GUNAKAN REPLACE agar tidak bisa kembali ke halaman login
-                    window.location.replace(targetPage);
-                })
-                .catch((error) => {
-                    console.error('Error fetching user data:', error);
-                    showModal('❌', 'Kesalahan Sistem', 'Gagal memuat data user.', 'OK', 'danger');
-                });
-        }
-
-        // ============================================================
-        // 9. MONITOR AUTH STATE
+        // 8. MONITOR AUTH STATE & REDIRECT (LANGSUNG, TANPA MODAL)
         // ============================================================
         onAuthStateChanged(auth, async (user) => {
+            console.log('📡 Auth state changed:', user?.email || 'tidak ada user');
+
             if (user) {
-                // Jika user sudah login dan masih di halaman login, langsung redirect
-                // tanpa menampilkan modal (agar tidak ganggu)
-                // Tapi jika baru saja login, modal sudah ditampilkan oleh loginForm
-                // Kita cek apakah modal sedang aktif
-                if (!modalOverlay.classList.contains('active')) {
-                    // Langsung redirect tanpa modal
-                    handleRedirect(user);
+                try {
+                    console.log('🔍 Mengambil data user dari Firestore...');
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    
+                    if (!userDoc.exists()) {
+                        console.warn('⚠️ Data user tidak ditemukan di Firestore');
+                        await signOut(auth);
+                        showModal('⚠️', 'Data Tidak Ditemukan', 'Data akun tidak ditemukan. Silakan login ulang.', 'OK', 'danger');
+                        return;
+                    }
+
+                    const data = userDoc.data();
+                    const role = data.role || 'owner';
+                    const name = data.name || 'User';
+                    
+                    console.log(`✅ User: ${name}, Role: ${role}, Email: ${user.email}`);
+
+                    // Update lastLogin
+                    await updateDoc(doc(db, 'users', user.uid), {
+                        lastLogin: new Date().toISOString()
+                    });
+
+                    // Redirect berdasarkan role (LANGSUNG, tanpa modal)
+                    let targetPage = '';
+                    switch (role) {
+                        case 'super_admin':
+                            targetPage = 'admin-dashboard.html';
+                            break;
+                        case 'owner':
+                            targetPage = 'dashboard.html';
+                            break;
+                        case 'cashier':
+                            targetPage = 'pos.html';
+                            break;
+                        default:
+                            targetPage = 'dashboard.html';
+                    }
+
+                    console.log(`🚀 Redirect ke: ${targetPage} (role: ${role})`);
+                    
+                    // 🔥 Gunakan replace agar tidak ada history back ke login
+                    window.location.replace(targetPage);
+
+                } catch (error) {
+                    console.error('❌ Error fetching user data:', error);
+                    showModal('❌', 'Kesalahan Sistem', 'Gagal memuat data user. Silakan coba lagi.', 'OK', 'danger');
                 }
-                // Jika modal aktif, biarkan user klik OK dulu
             } else {
-                // User logout, tutup modal jika terbuka
+                console.log('👤 Tidak ada user login, tetap di halaman login');
                 closeModal();
                 // Reset form
                 loginForm.reset();
@@ -665,26 +669,37 @@
         });
 
         // ============================================================
-        // 10. FORCE LOGOUT SAAT HALAMAN DIMUAT (jika ada session)
-        // ============================================================
-        window.addEventListener('load', async () => {
-            // Jika ada user yang login dan halaman ini dimuat ulang,
-            // kita biarkan onAuthStateChanged menangani redirect
-            // Tapi jika user tidak login, tidak perlu logout
-            console.log('✅ Halaman login siap!');
-        });
-
-        // ============================================================
-        // 11. LOGOUT (untuk testing)
+        // 9. LOGOUT (untuk testing)
         // ============================================================
         window.logout = async () => {
             try {
                 await signOut(auth);
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {}
                 showModal('👋', 'Logout Berhasil', 'Anda telah keluar dari akun.', 'OK', 'success');
             } catch (error) {
                 showModal('❌', 'Logout Gagal', error.message, 'OK', 'danger');
             }
         };
+
+        // ============================================================
+        // 10. TAMBAHAN: Reset saat halaman dimuat
+        // ============================================================
+        window.addEventListener('load', async () => {
+            if (auth.currentUser) {
+                console.log('🔄 Force logout di awal halaman dimuat');
+                try {
+                    await signOut(auth);
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {
+                    console.warn('Force logout error:', e);
+                }
+            }
+            console.log('✅ Halaman login siap!');
+        });
 
         console.log('✅ Sistem login + modal siap!');
     </script>
