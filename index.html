@@ -549,7 +549,7 @@
         });
 
         // ============================================================
-        // 7. LOGIN (DENGAN LOGOUT OTOMATIS)
+        // 7. LOGIN (DENGAN LOGOUT OTOMATIS + CLEAR STORAGE)
         // ============================================================
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -564,14 +564,33 @@
             setLoading(loginBtn, true);
 
             try {
-                // 🔥 PERBAIKAN: Logout otomatis jika ada user yang sedang login
+                // =====================================================
+                // 🔥 PERBAIKAN TOTAL: Logout & Clear Storage
+                // =====================================================
+                
+                // 1. Logout jika ada user yang sedang login
                 if (auth.currentUser) {
+                    console.log('🔄 Logout user sebelumnya:', auth.currentUser.email);
                     await signOut(auth);
-                    // Tunggu sebentar agar proses logout selesai
-                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
+                // 2. Bersihkan localStorage & sessionStorage (sisa-sisa session)
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    console.log('🧹 Storage dibersihkan');
+                } catch (e) {
+                    console.warn('Gagal clear storage:', e);
+                }
+
+                // 3. Tunggu agar proses benar-benar selesai (500ms)
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 4. Login dengan akun baru
+                console.log('🔐 Login dengan:', email);
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('✅ Login berhasil untuk:', userCredential.user.email);
+
                 showModal(
                     '✅',
                     'Login Berhasil',
@@ -588,6 +607,7 @@
                 else if (error.code === 'auth/wrong-password') msg += 'Password salah.';
                 else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
                 else if (error.code === 'auth/too-many-requests') msg += 'Terlalu banyak percobaan. Coba lagi nanti.';
+                else if (error.code === 'auth/network-request-failed') msg += 'Koneksi internet bermasalah.';
                 else msg += error.message;
                 showModal('❌', 'Login Gagal', msg, 'Coba Lagi', 'danger');
             } finally {
@@ -596,13 +616,18 @@
         });
 
         // ============================================================
-        // 8. MONITOR AUTH STATE & REDIRECT
+        // 8. MONITOR AUTH STATE & REDIRECT (dengan role yang benar)
         // ============================================================
         onAuthStateChanged(auth, async (user) => {
+            console.log('📡 Auth state changed:', user?.email || 'tidak ada user');
+
             if (user) {
                 try {
+                    console.log('🔍 Mengambil data user dari Firestore...');
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    
                     if (!userDoc.exists()) {
+                        console.warn('⚠️ Data user tidak ditemukan di Firestore');
                         await signOut(auth);
                         showModal('⚠️', 'Data Tidak Ditemukan', 'Data akun tidak ditemukan. Silakan login ulang.', 'OK', 'danger');
                         return;
@@ -610,11 +635,16 @@
 
                     const data = userDoc.data();
                     const role = data.role || 'owner';
+                    const name = data.name || 'User';
+                    
+                    console.log(`✅ User: ${name}, Role: ${role}, Email: ${user.email}`);
 
+                    // Update lastLogin
                     await updateDoc(doc(db, 'users', user.uid), {
                         lastLogin: new Date().toISOString()
                     });
 
+                    // Redirect berdasarkan role
                     let targetPage = '';
                     switch (role) {
                         case 'super_admin':
@@ -630,9 +660,11 @@
                             targetPage = 'dashboard.html';
                     }
 
+                    console.log(`🚀 Redirect ke: ${targetPage} (role: ${role})`);
+
                     showModal(
                         '🚀',
-                        `Selamat Datang, ${data.name || 'User'}!`,
+                        `Selamat Datang, ${name}!`,
                         `Anda login sebagai "${role}". Akan diarahkan ke halaman ${targetPage}.`,
                         'Lanjutkan',
                         'primary',
@@ -642,12 +674,13 @@
                     );
 
                 } catch (error) {
-                    console.error('Error fetching user data:', error);
+                    console.error('❌ Error fetching user data:', error);
                     showModal('❌', 'Kesalahan Sistem', 'Gagal memuat data user. Silakan coba lagi.', 'OK', 'danger');
                 }
             } else {
+                console.log('👤 Tidak ada user login, tetap di halaman login');
                 closeModal();
-                document.querySelectorAll('.container .btn:not(#loginBtn):not(#registerBtn)').forEach(btn => btn.remove());
+                // Reset form
                 loginForm.reset();
                 registerForm.reset();
                 if (!isLogin) toggleForm();
@@ -660,11 +693,35 @@
         window.logout = async () => {
             try {
                 await signOut(auth);
+                // Clear storage juga
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {}
                 showModal('👋', 'Logout Berhasil', 'Anda telah keluar dari akun.', 'OK', 'success');
             } catch (error) {
                 showModal('❌', 'Logout Gagal', error.message, 'OK', 'danger');
             }
         };
+
+        // ============================================================
+        // 10. TAMBAHAN: Reset saat halaman dimuat
+        // ============================================================
+        // Saat halaman login dimuat, jika ada user yang login, force logout
+        // agar tidak ada session yang tersisa dari sebelumnya
+        window.addEventListener('load', async () => {
+            if (auth.currentUser) {
+                console.log('🔄 Force logout di awal halaman dimuat');
+                try {
+                    await signOut(auth);
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {
+                    console.warn('Force logout error:', e);
+                }
+            }
+            console.log('✅ Halaman login siap!');
+        });
 
         console.log('✅ Sistem login + modal siap!');
     </script>
