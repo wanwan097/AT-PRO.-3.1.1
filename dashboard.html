@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Dashboard Owner - Kasir Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ===== RESET & VARIABEL ===== */
+        * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        :root {
+            --bg-primary: #f5f7fa; --bg-card: #ffffff; --bg-nav: #ffffff;
+            --text-primary: #1a1a2e; --text-secondary: #4a4a6a; --text-muted: #8888a0;
+            --border-color: #e0e0e0; --accent: #6c63ff; --accent-hover: #5a52d5;
+            --danger: #dc2626; --danger-hover: #b91c1c; --success: #16a34a; --success-hover: #15803d;
+            --shadow: 0 4px 12px rgba(0,0,0,0.06); --radius: 12px; --radius-sm: 8px;
+            --transition: 0.25s ease; --nav-height: 64px; --bottom-padding: 80px;
+            --modal-overlay: rgba(0,0,0,0.5);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f0f1a; --bg-card: #1a1a2e; --bg-nav: #16162a;
+                --text-primary: #eaeaf0; --text-secondary: #b0b0c8; --text-muted: #707090;
+                --border-color: #2a2a44; --shadow: 0 4px 12px rgba(0,0,0,0.4);
+                --modal-overlay: rgba(0,0,0,0.75);
+            }
+        }
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding-bottom: var(--bottom-padding); margin:0; transition: background var(--transition), color var(--transition); }
+        .app-container { max-width:480px; margin:0 auto; padding:16px 16px 0 16px; }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            position: fixed; bottom:0; left:0; right:0; background:var(--bg-nav);
+            border-top:1px solid var(--border-color); display:flex; justify-content:space-around;
+            align-items:center; height:var(--nav-height); padding:0 8px;
+            padding-bottom: env(safe-area-inset-bottom, 8px); z-index:100;
+            box-shadow:0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            flex:1; padding:4px 0; color:var(--text-muted); font-size:0.7rem;
+            cursor:pointer; transition:color var(--transition); border:none;
+            background:transparent; min-height:52px; -webkit-tap-highlight-color:transparent;
+            position:relative;
+        }
+        .nav-item i { font-size:1.4rem; margin-bottom:2px; }
+        .nav-item span { font-weight:500; font-size:0.6rem; letter-spacing:0.3px; }
+        .nav-item.active { color:var(--accent); }
+        .nav-item.hidden { display:none; }
+
+        .tab-content { display:none; animation: fadeIn 0.25s ease; }
+        .tab-content.active { display:block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        .page-title { font-size:1.4rem; font-weight:700; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+        .page-title .sub { font-size:0.85rem; font-weight:400; color:var(--text-secondary); }
+
+        .card { background:var(--bg-card); border-radius:var(--radius); padding:16px; margin-bottom:16px; box-shadow:var(--shadow); transition: background var(--transition), box-shadow var(--transition); }
+        .card-title { font-weight:600; font-size:1rem; margin-bottom:10px; color:var(--text-secondary); }
+
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; font-weight:600; font-size:0.85rem; margin-bottom:4px; color:var(--text-secondary); }
+        .form-group input, .form-group select {
+            width:100%; padding:12px 14px; border:2px solid var(--border-color); border-radius:var(--radius-sm);
+            background:var(--bg-primary); color:var(--text-primary); font-size:1rem; transition:border var(--transition);
+            outline:none; min-height:48px;
+        }
+        .form-group input:focus, .form-group select:focus { border-color:var(--accent); }
+        .form-group input:disabled { opacity:0.6; cursor:not-allowed; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+        .btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:8px;
+            padding:12px 20px; border:none; border-radius:var(--radius-sm); font-weight:700;
+            font-size:0.95rem; cursor:pointer; transition:background var(--transition), transform 0.1s;
+            min-height:48px; width:100%; color:white;
+        }
+        .btn:active { transform:scale(0.97); }
+        .btn-primary { background:var(--accent); }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-success { background:var(--success); }
+        .btn-success:hover { background:var(--success-hover); }
+        .btn-danger { background:var(--danger); }
+        .btn-danger:hover { background:var(--danger-hover); }
+        .btn-outline { background:transparent; color:var(--accent); border:2px solid var(--accent); }
+        .btn-outline:hover { background:var(--accent); color:white; }
+        .btn-sm { padding:8px 14px; font-size:0.8rem; min-height:38px; width:auto; }
+        .btn:disabled { opacity:0.6; pointer-events:none; }
+        .btn-block { width:100%; }
+
+        /* ===== PRODUCT GRID (view only) ===== */
+        .product-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; }
+        .product-card {
+            background:var(--bg-card); border-radius:var(--radius); padding:12px;
+            box-shadow:var(--shadow); text-align:center;
+            border:2px solid transparent; transition:transform 0.15s, box-shadow 0.15s;
+        }
+        .product-card img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:var(--radius-sm); background:var(--bg-primary); }
+        .product-card .name { font-weight:600; margin-top:6px; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .product-card .price { color:var(--accent); font-weight:700; font-size:0.9rem; }
+        .product-card .stock { font-size:0.75rem; color:var(--text-muted); }
+        .product-card .stock.low { color:var(--danger); }
+
+        /* ===== STATS ===== */
+        .stats-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px; }
+        .stat-box { background:var(--bg-card); border-radius:var(--radius); padding:14px 10px; text-align:center; box-shadow:var(--shadow); }
+        .stat-box .number { font-size:1.6rem; font-weight:700; color:var(--accent); }
+        .stat-box .label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
+
+        /* ===== HISTORY ===== */
+        .history-item { padding:12px 0; border-bottom:1px solid var(--border-color); }
+        .history-item:last-child { border-bottom:none; }
+        .history-item .header { display:flex; justify-content:space-between; font-weight:600; }
+        .history-item .details { font-size:0.85rem; color:var(--text-secondary); margin-top:4px; }
+        .history-item .total { color:var(--accent); font-weight:700; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay { position:fixed; inset:0; background:var(--modal-overlay); display:none; justify-content:center; align-items:center; z-index:999; padding:20px; backdrop-filter:blur(4px); }
+        .modal-overlay.active { display:flex; }
+        .modal-box { background:var(--bg-card); border-radius:var(--radius); padding:28px 24px; max-width:400px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:modalFade 0.3s ease; }
+        @keyframes modalFade { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        .modal-icon { font-size:2.8rem; text-align:center; margin-bottom:6px; }
+        .modal-title { font-size:1.3rem; font-weight:700; text-align:center; margin-bottom:6px; }
+        .modal-message { color:var(--text-secondary); text-align:center; margin-bottom:18px; line-height:1.5; font-size:0.95rem; white-space:pre-line; }
+        .modal-footer { display:flex; gap:12px; }
+        .modal-btn { padding:14px; border:none; border-radius:var(--radius-sm); font-weight:700; font-size:1rem; cursor:pointer; min-height:48px; color:white; transition:background var(--transition); flex:1; }
+        .modal-btn.primary { background:var(--accent); }
+        .modal-btn.primary:hover { background:var(--accent-hover); }
+        .modal-btn.danger { background:var(--danger); }
+        .modal-btn.danger:hover { background:var(--danger-hover); }
+        .modal-btn.success { background:var(--success); }
+        .modal-btn.success:hover { background:var(--success-hover); }
+        .modal-btn.outline { background:transparent; color:var(--text-secondary); border:2px solid var(--border-color); }
+        .modal-btn.outline:hover { background:var(--border-color); }
+
+        /* ===== PREMIUM SECTION ===== */
+        .premium-card {
+            text-align:center;
+            padding:20px;
+        }
+        .premium-card .icon {
+            font-size:3rem;
+            color:var(--accent);
+            margin-bottom:10px;
+        }
+        .premium-card .price {
+            font-size:1.8rem;
+            font-weight:700;
+            color:var(--accent);
+            margin:8px 0;
+        }
+        .premium-card .features {
+            text-align:left;
+            padding:0 16px;
+            margin:12px 0;
+        }
+        .premium-card .features li {
+            list-style:none;
+            padding:6px 0;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            color:var(--text-secondary);
+        }
+        .premium-card .features li i {
+            color:var(--success);
+            width:20px;
+        }
+        .premium-card .contact-wa {
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
+            background:#25D366;
+            color:white;
+            padding:12px 24px;
+            border-radius:30px;
+            font-weight:700;
+            text-decoration:none;
+            font-size:1rem;
+            margin-top:8px;
+            transition:transform 0.2s;
+        }
+        .premium-card .contact-wa:active {
+            transform:scale(0.96);
+        }
+        .premium-card .contact-wa i {
+            font-size:1.4rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width:480px) {
+            .app-container { padding:12px 12px 0 12px; }
+            .product-grid { grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; }
+            .stats-grid { grid-template-columns:1fr 1fr; }
+            .stats-grid .stat-box:last-child { grid-column: span 2; }
+            .form-row { grid-template-columns:1fr; }
+            .page-title { font-size:1.2rem; }
+            .premium-card .price { font-size:1.4rem; }
+            .premium-card .contact-wa { padding:10px 18px; font-size:0.9rem; }
+        }
+        @media (min-width:768px) { .app-container { max-width:600px; } .product-grid { grid-template-columns:repeat(3,1fr); } }
+
+        .empty-state { text-align:center; color:var(--text-muted); padding:30px 0; }
+        .empty-state i { font-size:2.5rem; margin-bottom:8px; opacity:0.4; }
+        .hidden { display:none !important; }
+        .mt-8 { margin-top:8px; }
+        .mb-8 { margin-bottom:8px; }
+        .flex { display:flex; gap:12px; }
+        .flex-between { display:flex; justify-content:space-between; align-items:center; }
+        .text-center { text-align:center; }
+        .w-full { width:100%; }
+
+        /* ===== PROFIL ===== */
+        .profile-avatar {
+            width:80px; height:80px; border-radius:50%; background:var(--accent); color:white;
+            display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700;
+            margin:0 auto 12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);
+        }
+        .profile-field { margin-bottom:16px; }
+        .profile-field label { display:block; font-weight:600; font-size:0.85rem; color:var(--text-secondary); margin-bottom:4px; }
+        .profile-field .value { font-size:1rem; padding:8px 0; border-bottom:1px solid var(--border-color); }
+        .profile-field input { width:100%; padding:8px 12px; border:2px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-primary); color:var(--text-primary); font-size:1rem; outline:none; min-height:44px; }
+        .profile-field input:focus { border-color:var(--accent); }
+
+        /* ===== PROMOSI ===== */
+        .promo-card { text-align:center; padding:20px; }
+        .promo-card i { font-size:3rem; color:var(--accent); margin-bottom:10px; }
+        .promo-card h3 { font-size:1.2rem; margin-bottom:8px; }
+        .promo-card p { color:var(--text-secondary); margin-bottom:16px; }
+        .promo-card .coming-soon {
+            display:inline-block;
+            background:var(--border-color);
+            padding:4px 16px;
+            border-radius:20px;
+            font-size:0.8rem;
+            color:var(--text-muted);
+            margin-top:8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-icon" id="modalIcon">✅</div>
+            <div class="modal-title" id="modalTitle">Sukses</div>
+            <div class="modal-message" id="modalMessage">Aksi berhasil dilakukan.</div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="modal-btn primary" id="modalConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="app-container" id="app">
+
+        <!-- TAB DASHBOARD -->
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="page-title">Dashboard <span class="sub" id="userNameDisplay">Halo, User</span></div>
+            <div class="stats-grid">
+                <div class="stat-box"><div class="number" id="statProducts">0</div><div class="label">Total Produk</div></div>
+                <div class="stat-box"><div class="number" id="statTodaySales">0</div><div class="label">Transaksi Hari Ini</div></div>
+                <div class="stat-box"><div class="number" id="statTodayRevenue">Rp0</div><div class="label">Pendapatan Hari Ini</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 Aktivitas Terbaru</div>
+                <div id="recentActivity"><div class="empty-state"><i class="fas fa-receipt"></i><p>Belum ada transaksi.</p></div></div>
+            </div>
+            <!-- Admin voucher (Super Admin) -->
+            <div id="adminVoucherSection" class="card hidden">
+                <div class="card-title">👑 Kelola Voucher (Super Admin)</div>
+                <div class="form-group"><label>Kode Voucher</label><input type="text" id="voucherCode" placeholder="contoh: DISKON40" /></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Diskon (%)</label><input type="number" id="voucherDiscount" placeholder="40" min="1" max="100" /></div>
+                    <div class="form-group"><label>Kuota</label><input type="number" id="voucherQuota" placeholder="100" min="1" /></div>
+                </div>
+                <div class="form-group"><label>Berlaku Sampai</label><input type="date" id="voucherExpiry" /></div>
+                <button class="btn btn-primary" id="createVoucherBtn">Buat Voucher</button>
+                <div id="voucherList" class="mt-8"></div>
+            </div>
+        </div>
+
+        <!-- TAB PRODUK (view only untuk owner) -->
+        <div class="tab-content" id="tab-products">
+            <div class="page-title">Daftar Produk</div>
+            <div class="card">
+                <div class="flex-between mb-8">
+                    <span class="card-title">Semua Produk</span>
+                    <input type="text" id="searchProductOwner" placeholder="Cari..." style="padding:6px 12px;border-radius:20px;border:2px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);width:140px;font-size:0.85rem;" />
+                </div>
+                <div class="product-grid" id="productGridOwner"><div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-box-open"></i><p>Belum ada produk.</p></div></div>
+            </div>
+        </div>
+
+        <!-- TAB PROMOSI -->
+        <div class="tab-content" id="tab-promosi">
+            <div class="page-title">Promosikan Toko</div>
+            <div class="card promo-card">
+                <i class="fas fa-robot"></i>
+                <h3>Promosi dengan AI</h3>
+                <p>Fitur promosi berbasis AI dari Firebase akan segera hadir. Sistem akan menganalisis toko Anda dan memberikan rekomendasi promosi terbaik.</p>
+                <div class="coming-soon">🚀 Segera Hadir</div>
+                <div class="mt-8" style="font-size:0.8rem;color:var(--text-muted);">
+                    * Fitur ini akan menggunakan Firebase AI untuk optimasi promosi.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB PREMIUM -->
+        <div class="tab-content" id="tab-premium">
+            <div class="page-title">Premium</div>
+            <div class="card premium-card">
+                <div class="icon">👑</div>
+                <h2>Kasir Premium</h2>
+                <div class="price">Rp 100.000 / bulan</div>
+                <p style="color:var(--text-secondary);margin:8px 0;">Dapatkan fitur eksklusif untuk mengembangkan toko Anda</p>
+                <div class="features">
+                    <li><i class="fas fa-check-circle"></i> Promosi ke semua media sosial</li>
+                    <li><i class="fas fa-check-circle"></i> Analisis penjualan real-time</li>
+                    <li><i class="fas fa-check-circle"></i> Dashboard penjualan mingguan</li>
+                    <li><i class="fas fa-check-circle"></i> Prioritas dukungan pelanggan</li>
+                    <li><i class="fas fa-check-circle"></i> Tanpa batasan transaksi</li>
+                </div>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin:12px 0;">
+                    💡 Hubungi kami untuk berlangganan premium
+                </p>
+                <a href="https://wa.me/6281542721059?text=Saya%20tertarik%20untuk%20berlangganan%20Kasir%20Premium"  
+                   target="_blank" 
+                   class="contact-wa">
+                    <i class="fab fa-whatsapp"></i> Hubungi Sekarang
+                </a>
+            </div>
+        </div>
+
+        <!-- TAB PROFIL -->
+        <div class="tab-content" id="tab-profil">
+            <div class="page-title">Profil Toko</div>
+            <div class="card">
+                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <form id="profileForm">
+                    <div class="profile-field">
+                        <label>Nama Toko</label>
+                        <input type="text" id="profileStoreName" placeholder="Nama toko Anda" />
+                    </div>
+                    <div class="profile-field">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" disabled />
+                    </div>
+                    <div class="profile-field">
+                        <label>Status Premium</label>
+                        <input type="text" id="profilePremiumStatus" disabled />
+                    </div>
+                    <div class="flex" style="gap:12px; margin-top:8px;">
+                        <button type="button" class="btn btn-primary" id="profileEditBtn"><i class="fas fa-edit"></i> Edit</button>
+                        <button type="submit" class="btn btn-success" id="profileSaveBtn" style="display:none;"><i class="fas fa-save"></i> Simpan</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card">
+                <a href="premium.html" class="btn btn-primary"><i class="fas fa-crown"></i> Premium</a>
+                <a href="about.html" class="btn btn-outline mt-8"><i class="fas fa-info-circle"></i> Tentang Kami</a>
+                <a href="report.html" class="btn btn-outline mt-8"><i class="fas fa-exclamation-triangle"></i> Laporkan Masalah</a>
+                <button class="btn btn-danger mt-8" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Keluar Akun</button>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="nav-item active" data-tab="dashboard"><i class="fas fa-home"></i><span>Dashboard</span></button>
+            <button class="nav-item" data-tab="products"><i class="fas fa-box"></i><span>Produk</span></button>
+            <button class="nav-item" data-tab="promosi"><i class="fas fa-bullhorn"></i><span>Promosi</span></button>
+            <button class="nav-item" data-tab="premium"><i class="fas fa-crown"></i><span>Premium</span></button>
+            <button class="nav-item" data-tab="profil"><i class="fas fa-user"></i><span>Profil</span></button>
+            <!-- Kasir disembunyikan untuk owner, akan ditampilkan jika role cashier -->
+            <button class="nav-item hidden" data-tab="pos" id="navKasir"><i class="fas fa-cash-register"></i><span>Kasir</span></button>
+        </nav>
+    </div>
+
+    <!-- FIREBASE SDK -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+                "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js",
+                "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ================================================================
+        // 1. IMPOR & INISIALISASI
+        // ================================================================
+        import { initializeApp } from 'firebase/app';
+        import { getAnalytics } from 'firebase/analytics';
+        import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+        import {
+            getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
+            query, where, serverTimestamp, writeBatch
+        } from 'firebase/firestore';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcvaZATpsbSNtBAuKxuCsvpfLjODc7Cko",
+            authDomain: "asisten-toko.firebaseapp.com",
+            databaseURL: "https://asisten-toko-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "asisten-toko",
+            storageBucket: "asisten-toko.firebasestorage.app",
+            messagingSenderId: "493614445360",
+            appId: "1:493614445360:web:2f235b72bdace6578c8ef5",
+            measurementId: "G-1923M0HH2W"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // ================================================================
+        // 2. ELEMEN DOM
+        // ================================================================
+        const navItems = document.querySelectorAll('.nav-item[data-tab]');
+        const tabContents = {
+            dashboard: document.getElementById('tab-dashboard'),
+            products: document.getElementById('tab-products'),
+            promosi: document.getElementById('tab-promosi'),
+            premium: document.getElementById('tab-premium'),
+            profil: document.getElementById('tab-profil'),
+            pos: document.getElementById('tab-pos'),
+        };
+        const navKasir = document.getElementById('navKasir');
+
+        // Dashboard
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const statProducts = document.getElementById('statProducts');
+        const statTodaySales = document.getElementById('statTodaySales');
+        const statTodayRevenue = document.getElementById('statTodayRevenue');
+        const recentActivity = document.getElementById('recentActivity');
+
+        // Admin voucher
+        const adminVoucherSection = document.getElementById('adminVoucherSection');
+        const voucherCode = document.getElementById('voucherCode');
+        const voucherDiscount = document.getElementById('voucherDiscount');
+        const voucherQuota = document.getElementById('voucherQuota');
+        const voucherExpiry = document.getElementById('voucherExpiry');
+        const createVoucherBtn = document.getElementById('createVoucherBtn');
+        const voucherList = document.getElementById('voucherList');
+
+        // Produk (view only)
+        const productGridOwner = document.getElementById('productGridOwner');
+        const searchProductOwner = document.getElementById('searchProductOwner');
+
+        // Profil
+        const profileStoreName = document.getElementById('profileStoreName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profilePremiumStatus = document.getElementById('profilePremiumStatus');
+        const profileEditBtn = document.getElementById('profileEditBtn');
+        const profileSaveBtn = document.getElementById('profileSaveBtn');
+        const profileForm = document.getElementById('profileForm');
+        const profileAvatar = document.getElementById('profileAvatar');
+
+        // Modal
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalFooter = document.getElementById('modalFooter');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+        // Logout
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // ================================================================
+        // 3. STATE
+        // ================================================================
+        let currentUser = null;
+        let userRole = 'owner';
+        let userName = '';
+        let products = [];
+        let allTransactions = [];
+        let userData = {};
+
+        // ================================================================
+        // 4. FUNGSI MODAL
+        // ================================================================
+        function showModal(icon, title, message, btnText, btnClass = 'primary', onConfirm = null, showCancel = false) {
+            modalIcon.textContent = icon;
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            if (showCancel) {
+                modalFooter.innerHTML = `
+                    <button class="modal-btn outline" id="modalCancelBtn">Batal</button>
+                    <button class="modal-btn ${btnClass}" id="modalConfirmBtn">${btnText}</button>
+                `;
+                document.getElementById('modalCancelBtn').onclick = () => {
+                    modalOverlay.classList.remove('active');
+                };
+                document.getElementById('modalConfirmBtn').onclick = () => {
+                    modalOverlay.classList.remove('active');
+                    if (onConfirm) onConfirm();
+                };
+            } else {
+                modalFooter.innerHTML = `<button class="modal-btn ${btnClass}" id="modalConfirmBtn">${btnText}</button>`;
+                document.getElementById('modalConfirmBtn').onclick = () => {
+                    modalOverlay.classList.remove('active');
+                    if (onConfirm) onConfirm();
+                };
+            }
+            modalOverlay.classList.add('active');
+        }
+
+        // ================================================================
+        // 5. AUTH & ROLE
+        // ================================================================
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (!userDoc.exists()) {
+                        await signOut(auth);
+                        showModal('⚠️', 'Data Tidak Ditemukan', 'Akun tidak valid. Silakan login ulang.', 'OK', 'danger',
+                            () => window.location.href = 'index.html');
+                        return;
+                    }
+                    userData = userDoc.data();
+                    userRole = userData.role || 'owner';
+                    userName = userData.name || 'User';
+                    userNameDisplay.textContent = `Halo, ${userName}`;
+
+                    setupRoleUI(userRole);
+                    await loadDashboard();
+                    await loadProducts();
+                    loadProfile();
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    showModal('❌', 'Error', 'Gagal memuat data user.', 'OK', 'danger');
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        function setupRoleUI(role) {
+            if (role === 'cashier') {
+                document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.classList.add('hidden'));
+                navKasir.classList.remove('hidden');
+                document.getElementById('tab-dashboard').classList.remove('active');
+                document.getElementById('tab-products').classList.remove('active');
+                document.getElementById('tab-promosi').classList.remove('active');
+                document.getElementById('tab-premium').classList.remove('active');
+                document.getElementById('tab-profil').classList.remove('active');
+                document.getElementById('tab-pos').classList.add('active');
+                adminVoucherSection.classList.add('hidden');
+                switchTab('pos');
+            } else if (role === 'super_admin') {
+                document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.classList.remove('hidden'));
+                navKasir.classList.add('hidden');
+                adminVoucherSection.classList.remove('hidden');
+                loadVouchers();
+                switchTab('dashboard');
+            } else {
+                document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.classList.remove('hidden'));
+                navKasir.classList.add('hidden');
+                adminVoucherSection.classList.add('hidden');
+                switchTab('dashboard');
+            }
+        }
+
+        function switchTab(tabId) {
+            Object.keys(tabContents).forEach(key => {
+                if (tabContents[key]) tabContents[key].classList.remove('active');
+            });
+            if (tabContents[tabId]) tabContents[tabId].classList.add('active');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.tab === tabId) item.classList.add('active');
+            });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tab = item.dataset.tab;
+                if (tab) switchTab(tab);
+            });
+        });
+
+        // ================================================================
+        // 6. DASHBOARD
+        // ================================================================
+        async function loadDashboard() {
+            try {
+                const prodSnapshot = await getDocs(collection(db, 'products'));
+                statProducts.textContent = prodSnapshot.size;
+
+                const q = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
+                const transSnapshot = await getDocs(q);
+                const transList = [];
+                transSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.createdAt?.toDate?.() || new Date(data.createdAt);
+                    transList.push({ id: doc.id, ...data, date });
+                });
+                transList.sort((a, b) => b.date - a.date);
+                allTransactions = transList;
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const todayTrans = transList.filter(t => {
+                    const d = t.date;
+                    return d.getFullYear() === today.getFullYear() &&
+                           d.getMonth() === today.getMonth() &&
+                           d.getDate() === today.getDate();
+                });
+                statTodaySales.textContent = todayTrans.length;
+                const totalRevenue = todayTrans.reduce((sum, t) => sum + (t.totalPrice || 0), 0);
+                statTodayRevenue.textContent = `Rp${formatRupiah(totalRevenue)}`;
+
+                const recent = transList.slice(0, 5);
+                if (recent.length === 0) {
+                    recentActivity.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><p>Belum ada transaksi.</p></div>`;
+                } else {
+                    recentActivity.innerHTML = recent.map(t => `
+                        <div class="history-item">
+                            <div class="header">
+                                <span>${t.date.toLocaleDateString('id-ID', {hour:'2-digit', minute:'2-digit'})}</span>
+                                <span class="total">Rp${formatRupiah(t.totalPrice)}</span>
+                            </div>
+                            <div class="details">${t.items?.map(i => `${i.name} x${i.qty}`).join(', ') || '-'}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Load dashboard error:', error);
+                showModal('❌', 'Error', 'Gagal memuat dashboard: ' + error.message, 'OK', 'danger');
+            }
+        }
+
+        // ================================================================
+        // 7. PRODUK (view only)
+        // ================================================================
+        async function loadProducts() {
+            try {
+                const snapshot = await getDocs(collection(db, 'products'));
+                products = [];
+                snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+                renderProductsOwner();
+            } catch (error) {
+                console.error('Load products error:', error);
+                showModal('❌', 'Error', 'Gagal memuat produk: ' + error.message, 'OK', 'danger');
+            }
+        }
+
+        function renderProductsOwner() {
+            const search = searchProductOwner.value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(search));
+            if (filtered.length === 0) {
+                productGridOwner.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-box-open"></i><p>${search ? 'Produk tidak ditemukan' : 'Belum ada produk'}</p></div>`;
+                return;
+            }
+            productGridOwner.innerHTML = filtered.map(p => `
+                <div class="product-card">
+                    <img src="${p.imageUrl || 'https://via.placeholder.com/150?text=No+Image'}" alt="${p.name}" loading="lazy" />
+                    <div class="name">${p.name}</div>
+                    <div class="price">Rp${formatRupiah(p.price)}</div>
+                    <div class="stock ${p.stock < 5 ? 'low' : ''}">Stok: ${p.stock}</div>
+                </div>
+            `).join('');
+        }
+
+        searchProductOwner.addEventListener('input', renderProductsOwner);
+
+        // ================================================================
+        // 8. PROFIL
+        // ================================================================
+        function loadProfile() {
+            if (!userData) return;
+            profileStoreName.value = userData.storeName || '';
+            profileEmail.value = userData.email || '';
+            const premiumStatus = userData.isPremium ? '✅ Aktif' : '❌ Tidak Aktif';
+            profilePremiumStatus.value = premiumStatus;
+            const initial = (userData.name || 'U')[0].toUpperCase();
+            profileAvatar.textContent = initial;
+            profileStoreName.disabled = true;
+            profileSaveBtn.style.display = 'none';
+            profileEditBtn.style.display = 'inline-flex';
+        }
+
+        profileEditBtn.addEventListener('click', () => {
+            profileStoreName.disabled = false;
+            profileStoreName.focus();
+            profileEditBtn.style.display = 'none';
+            profileSaveBtn.style.display = 'inline-flex';
+        });
+
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = profileStoreName.value.trim();
+            if (!newName) {
+                showModal('⚠️', 'Data Tidak Lengkap', 'Nama toko tidak boleh kosong.', 'OK', 'danger');
+                return;
+            }
+            profileSaveBtn.disabled = true;
+            profileSaveBtn.textContent = 'Menyimpan...';
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    storeName: newName,
+                    updatedAt: serverTimestamp()
+                });
+                userData.storeName = newName;
+                showModal('✅', 'Profil Diperbarui', 'Nama toko berhasil diubah.', 'OK', 'success');
+                profileStoreName.disabled = true;
+                profileEditBtn.style.display = 'inline-flex';
+                profileSaveBtn.style.display = 'none';
+            } catch (error) {
+                console.error('Update profile error:', error);
+                showModal('❌', 'Gagal', error.message || 'Terjadi kesalahan.', 'OK', 'danger');
+            } finally {
+                profileSaveBtn.disabled = false;
+                profileSaveBtn.textContent = 'Simpan';
+            }
+        });
+
+        // ================================================================
+        // 9. ADMIN VOUCHER
+        // ================================================================
+        async function loadVouchers() {
+            try {
+                const snapshot = await getDocs(collection(db, 'vouchers'));
+                let html = '<div class="card-title" style="margin-top:12px;">Daftar Voucher</div>';
+                if (snapshot.empty) {
+                    html += '<div class="empty-state"><p>Belum ada voucher.</p></div>';
+                } else {
+                    html += snapshot.docs.map(doc => {
+                        const v = doc.data();
+                        return `
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                                <div><strong>${v.voucherCode}</strong> <span style="font-size:0.8rem;color:var(--text-muted);">${v.discountValue}% · ${v.usedCount}/${v.maxUses} ${v.isActive ? '✅' : '❌'}</span></div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);">Exp: ${v.expiryDate || '-'}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                voucherList.innerHTML = html;
+            } catch (error) {
+                console.error('Load vouchers error:', error);
+            }
+        }
+
+        createVoucherBtn.addEventListener('click', async () => {
+            const code = voucherCode.value.trim().toUpperCase();
+            const discount = parseInt(voucherDiscount.value);
+            const quota = parseInt(voucherQuota.value);
+            const expiry = voucherExpiry.value;
+            if (!code || !discount || !quota || !expiry) {
+                showModal('⚠️', 'Data Tidak Lengkap', 'Harap isi semua field.', 'OK', 'danger');
+                return;
+            }
+            if (discount < 1 || discount > 100) {
+                showModal('⚠️', 'Diskon Tidak Valid', 'Diskon harus antara 1-100%.', 'OK', 'danger');
+                return;
+            }
+            createVoucherBtn.disabled = true;
+            createVoucherBtn.textContent = 'Menyimpan...';
+            try {
+                await addDoc(collection(db, 'vouchers'), {
+                    voucherCode: code,
+                    discountType: 'PERCENT',
+                    discountValue: discount,
+                    maxUses: quota,
+                    usedCount: 0,
+                    expiryDate: expiry,
+                    isActive: true,
+                    createdBy: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                showModal('🎉', 'Voucher Dibuat', `Voucher "${code}" berhasil dibuat.`, 'OK', 'success');
+                voucherCode.value = '';
+                voucherDiscount.value = '';
+                voucherQuota.value = '';
+                voucherExpiry.value = '';
+                await loadVouchers();
+            } catch (error) {
+                console.error('Create voucher error:', error);
+                showModal('❌', 'Gagal', error.message || 'Terjadi kesalahan.', 'OK', 'danger');
+            } finally {
+                createVoucherBtn.disabled = false;
+                createVoucherBtn.textContent = 'Buat Voucher';
+            }
+        });
+
+        // ================================================================
+        // 10. LOGOUT
+        // ================================================================
+        logoutBtn.addEventListener('click', () => {
+            showModal('👋', 'Konfirmasi Keluar', 'Yakin ingin keluar dari akun?', 'Ya, Keluar', 'danger', async () => {
+                try {
+                    await signOut(auth);
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    showModal('❌', 'Gagal Logout', error.message, 'OK', 'danger');
+                }
+            }, true);
+        });
+
+        // ================================================================
+        // 11. UTILITY
+        // ================================================================
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID').format(amount);
+        }
+
+        console.log('✅ Dashboard Owner siap!');
+    </script>
+
+</body>
+</html>

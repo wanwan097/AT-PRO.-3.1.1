@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Kasir Premium - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ===== RESET & VARIABEL ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --border-color: #e0e0e0;
+            --accent: #6c63ff;
+            --accent-hover: #5a52d5;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --transition: 0.3s ease;
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #12121a;
+                --bg-card: #1e1e2f;
+                --text-primary: #eaeaf0;
+                --text-secondary: #b0b0c8;
+                --border-color: #2e2e44;
+                --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+                --modal-overlay: rgba(0, 0, 0, 0.7);
+            }
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background var(--transition), color var(--transition);
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            box-shadow: var(--shadow);
+            transition: background var(--transition), box-shadow var(--transition);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border var(--transition), background var(--transition);
+            outline: none;
+            -webkit-appearance: none;
+            min-height: 52px;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.1s;
+            margin-top: 6px;
+            min-height: 52px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-link span {
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .toggle-link span:hover {
+            color: var(--accent-hover);
+        }
+
+        .role-select {
+            display: none;
+        }
+        .role-select.active {
+            display: block;
+        }
+
+        .admin-seed-group {
+            display: none;
+            margin-bottom: 12px;
+        }
+        .admin-seed-group.active {
+            display: block;
+        }
+        .admin-seed-group small {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-overlay);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalFade 0.3s ease;
+        }
+
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .modal-message {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background var(--transition);
+            min-height: 52px;
+        }
+
+        .modal-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+        .modal-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+        .modal-btn.danger {
+            background: #dc2626;
+            color: white;
+        }
+        .modal-btn.danger:hover {
+            background: #b91c1c;
+        }
+        .modal-btn.success {
+            background: #16a34a;
+            color: white;
+        }
+        .modal-btn.success:hover {
+            background: #15803d;
+        }
+
+        /* responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 16px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .modal-box {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-icon" id="modalIcon">✅</div>
+            <div class="modal-title" id="modalTitle">Sukses</div>
+            <div class="modal-message" id="modalMessage">Pendaftaran berhasil!</div>
+            <button class="modal-btn primary" id="modalBtn">OK</button>
+        </div>
+    </div>
+
+    <!-- ===== KONTEN UTAMA ===== -->
+    <div class="container" id="app">
+        <h1>Kasir Premium</h1>
+        <p class="subtitle" id="formTitle">Masuk ke akun Anda</p>
+
+        <!-- Form Login -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="email@toko.com" required />
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Kata Sandi</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required minlength="6" />
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Masuk</button>
+        </form>
+
+        <!-- Form Register -->
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="regName">Nama Lengkap</label>
+                <input type="text" id="regName" placeholder="Budi Santoso" required />
+            </div>
+            <div class="form-group">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" placeholder="email@toko.com" required />
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Kata Sandi (min. 6 karakter)</label>
+                <input type="password" id="regPassword" placeholder="••••••••" required minlength="6" />
+            </div>
+            <div class="form-group role-select active">
+                <label for="regRole">Pilih Peran</label>
+                <select id="regRole">
+                    <option value="owner">Owner (Pemilik Toko)</option>
+                    <option value="cashier">Kasir (Karyawan)</option>
+                </select>
+            </div>
+            <div class="form-group admin-seed-group">
+                <label for="adminSeed">Kode Admin (opsional)</label>
+                <input type="text" id="adminSeed" placeholder="Masukkan kode rahasia" />
+                <small>Jika Anda pengembang, masukkan kode untuk menjadi Super Admin.</small>
+            </div>
+            <button type="submit" class="btn" id="registerBtn">Daftar</button>
+        </form>
+
+        <!-- Toggle -->
+        <div class="toggle-link">
+            <span id="toggleText">Belum punya akun? <span id="toggleAction">Daftar</span></span>
+        </div>
+    </div>
+
+    <!-- ===== FIREBASE SDK ===== -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+                "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ============================================================
+        // 1. IMPOR & INISIALISASI
+        // ============================================================
+        import { initializeApp } from 'firebase/app';
+        import { getAnalytics } from 'firebase/analytics';
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from 'firebase/auth';
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc,
+            updateDoc,
+            serverTimestamp
+        } from 'firebase/firestore';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcvaZATpsbSNtBAuKxuCsvpfLjODc7Cko",
+            authDomain: "asisten-toko.firebaseapp.com",
+            databaseURL: "https://asisten-toko-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "asisten-toko",
+            storageBucket: "asisten-toko.firebasestorage.app",
+            messagingSenderId: "493614445360",
+            appId: "1:493614445360:web:2f235b72bdace6578c8ef5",
+            measurementId: "G-1923M0HH2W"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ============================================================
+        // 2. ELEMEN
+        // ============================================================
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const toggleAction = document.getElementById('toggleAction');
+        const toggleText = document.getElementById('toggleText');
+        const formTitle = document.getElementById('formTitle');
+
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+
+        const regName = document.getElementById('regName');
+        const regEmail = document.getElementById('regEmail');
+        const regPassword = document.getElementById('regPassword');
+        const regRole = document.getElementById('regRole');
+        const adminSeed = document.getElementById('adminSeed');
+        const registerBtn = document.getElementById('registerBtn');
+
+        // Modal
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalBtn = document.getElementById('modalBtn');
+
+        // ============================================================
+        // 3. FUNGSI MODAL
+        // ============================================================
+        function showModal(icon, title, message, btnText, btnClass = 'primary', onConfirm = null) {
+            modalIcon.textContent = icon;
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalBtn.textContent = btnText;
+            modalBtn.className = `modal-btn ${btnClass}`;
+            modalOverlay.classList.add('active');
+
+            // Hapus listener lama
+            modalBtn.onclick = null;
+            modalBtn.onclick = () => {
+                modalOverlay.classList.remove('active');
+                if (onConfirm) onConfirm();
+            };
+        }
+
+        // Fungsi untuk menutup modal secara paksa (jika perlu)
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+        }
+
+        // ============================================================
+        // 4. TOGGLE FORM
+        // ============================================================
+        let isLogin = true;
+
+        function toggleForm() {
+            isLogin = !isLogin;
+            if (isLogin) {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                formTitle.textContent = 'Masuk ke akun Anda';
+                toggleAction.textContent = 'Daftar';
+                toggleText.innerHTML = `Belum punya akun? <span id="toggleAction">Daftar</span>`;
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                formTitle.textContent = 'Buat akun baru';
+                toggleAction.textContent = 'Masuk';
+                toggleText.innerHTML = `Sudah punya akun? <span id="toggleAction">Masuk</span>`;
+                document.querySelector('.admin-seed-group').classList.remove('active');
+                adminSeed.value = '';
+            }
+            // Re-attach
+            document.getElementById('toggleAction').addEventListener('click', toggleForm);
+        }
+
+        document.getElementById('toggleAction').addEventListener('click', toggleForm);
+
+        // ============================================================
+        // 5. SET LOADING
+        // ============================================================
+        function setLoading(button, isLoading) {
+            button.disabled = isLoading;
+            button.textContent = isLoading ? 'Memproses...' : button.dataset.originalText;
+        }
+        [loginBtn, registerBtn].forEach(btn => {
+            btn.dataset.originalText = btn.textContent;
+        });
+
+        // ============================================================
+        // 6. REGISTRASI
+        // ============================================================
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = regName.value.trim();
+            const email = regEmail.value.trim();
+            const password = regPassword.value;
+            let role = regRole.value;
+            const seed = adminSeed.value.trim();
+
+            if (seed === 'SUPER2026') role = 'super_admin';
+
+            if (!name || !email || !password) {
+                showModal('⚠️', 'Data Tidak Lengkap', 'Harap isi semua field dengan benar.', 'OK', 'danger');
+                return;
+            }
+
+            setLoading(registerBtn, true);
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: email,
+                    role: role,
+                    storeName: '',
+                    storeUrl: '',
+                    isPremium: false,
+                    premiumExpiry: null,
+                    lastLogin: new Date().toISOString(),
+                    createdAt: serverTimestamp()
+                });
+
+                // Logout otomatis agar user harus login ulang
+                await signOut(auth);
+
+                // Tampilkan modal sukses dan arahkan ke login
+                showModal(
+                    '🎉',
+                    'Pendaftaran Berhasil!',
+                    `Akun dengan role "${role}" telah dibuat. Silakan login menggunakan email dan password yang telah didaftarkan.`,
+                    'OK, Login',
+                    'success',
+                    () => {
+                        // Isi email di form login
+                        loginEmail.value = email;
+                        loginPassword.value = '';
+                        // Pindah ke tampilan login
+                        if (!isLogin) toggleForm();
+                        // Fokus ke password
+                        loginPassword.focus();
+                    }
+                );
+
+                registerForm.reset();
+            } catch (error) {
+                console.error('Register error:', error);
+                let msg = 'Gagal mendaftar. ';
+                if (error.code === 'auth/email-already-in-use') msg += 'Email sudah terdaftar.';
+                else if (error.code === 'auth/weak-password') msg += 'Kata sandi minimal 6 karakter.';
+                else msg += error.message;
+                showModal('❌', 'Pendaftaran Gagal', msg, 'Coba Lagi', 'danger');
+            } finally {
+                setLoading(registerBtn, false);
+            }
+        });
+
+        // ============================================================
+        // 7. LOGIN
+        // ============================================================
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+
+            if (!email || !password) {
+                showModal('⚠️', 'Data Tidak Lengkap', 'Email dan password harus diisi.', 'OK', 'danger');
+                return;
+            }
+
+            setLoading(loginBtn, true);
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                // Sukses login, biarkan onAuthStateChanged menangani redirect
+                // Tapi kita tampilkan modal sukses sebentar
+                showModal(
+                    '✅',
+                    'Login Berhasil',
+                    'Selamat datang kembali! Mengarahkan ke dashboard...',
+                    'OK',
+                    'success',
+                    () => {
+                        // Redirect akan ditangani oleh onAuthStateChanged
+                        // Tapi jika belum, kita biarkan
+                    }
+                );
+                loginForm.reset();
+            } catch (error) {
+                console.error('Login error:', error);
+                let msg = 'Gagal masuk. ';
+                if (error.code === 'auth/user-not-found') msg += 'Email tidak terdaftar.';
+                else if (error.code === 'auth/wrong-password') msg += 'Password salah.';
+                else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
+                else msg += error.message;
+                showModal('❌', 'Login Gagal', msg, 'Coba Lagi', 'danger');
+            } finally {
+                setLoading(loginBtn, false);
+            }
+        });
+
+        // ============================================================
+        // 8. MONITOR AUTH STATE & REDIRECT
+        // ============================================================
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (!userDoc.exists()) {
+                        await signOut(auth);
+                        showModal('⚠️', 'Data Tidak Ditemukan', 'Data akun tidak ditemukan. Silakan login ulang.', 'OK', 'danger');
+                        return;
+                    }
+
+                    const data = userDoc.data();
+                    const role = data.role || 'owner';
+
+                    // Update lastLogin
+                    await updateDoc(doc(db, 'users', user.uid), {
+                        lastLogin: new Date().toISOString()
+                    });
+
+                    // Redirect
+                    let targetPage = '';
+                    switch (role) {
+                        case 'super_admin':
+                            targetPage = 'admin-dashboard.html';
+                            break;
+                        case 'owner':
+                            targetPage = 'dashboard.html';
+                            break;
+                        case 'cashier':
+                            targetPage = 'pos.html';
+                            break;
+                        default:
+                            targetPage = 'dashboard.html';
+                    }
+
+                    // Tampilkan modal info sebentar lalu redirect
+                    showModal(
+                        '🚀',
+                        `Selamat Datang, ${data.name || 'User'}!`,
+                        `Anda login sebagai "${role}". Akan diarahkan ke halaman ${targetPage}.`,
+                        'Lanjutkan',
+                        'primary',
+                        () => {
+                            window.location.href = targetPage;
+                        }
+                    );
+
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    showModal('❌', 'Kesalahan Sistem', 'Gagal memuat data user. Silakan coba lagi.', 'OK', 'danger');
+                }
+            } else {
+                // User logout - tutup modal jika terbuka
+                closeModal();
+                // Hapus tombol logout tambahan jika ada
+                document.querySelectorAll('.container .btn:not(#loginBtn):not(#registerBtn)').forEach(btn => btn.remove());
+                // Reset form
+                loginForm.reset();
+                registerForm.reset();
+                if (!isLogin) toggleForm();
+            }
+        });
+
+        // ============================================================
+        // 9. LOGOUT (untuk testing)
+        // ============================================================
+        window.logout = async () => {
+            try {
+                await signOut(auth);
+                showModal('👋', 'Logout Berhasil', 'Anda telah keluar dari akun.', 'OK', 'success');
+            } catch (error) {
+                showModal('❌', 'Logout Gagal', error.message, 'OK', 'danger');
+            }
+        };
+
+        console.log('✅ Sistem login + modal siap!');
+    </script>
+
+</body>
+</html>

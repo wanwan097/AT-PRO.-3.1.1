@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pusat Bantuan Kasir - Premium Support</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-chat: #090d16;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --bubble-user: #6366f1;
+            --bubble-admin: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 85vh;
+            background-color: var(--bg-panel);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        /* Header Style */
+        .app-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .support-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .header-info h1 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .header-info p {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Badge / Tombol Ganti Toko */
+        .store-badge {
+            background-color: rgba(99, 102, 241, 0.15);
+            border: 1px solid var(--primary);
+            color: #a5b4fc;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .store-badge:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Chat Body Area */
+        .chat-body {
+            flex: 1;
+            background-color: var(--bg-chat);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-bubble.admin {
+            background-color: var(--bubble-admin);
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .chat-bubble.user {
+            background-color: var(--bubble-user);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .chat-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            display: block;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .chat-bubble.admin .chat-time {
+            color: var(--text-muted);
+        }
+
+        /* Input Footer Area */
+        .chat-footer {
+            padding: 15px 20px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .cashier-input {
+            flex: 1;
+            background-color: var(--bg-chat);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .cashier-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .message-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        textarea.cashier-input {
+            resize: none;
+            height: 45px;
+            max-height: 90px;
+            padding-top: 12px;
+        }
+
+        .send-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .send-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal / Setup Nama Toko Pertama Kali */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+        .modal-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        .modal-box h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .modal-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .modal-box input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .modal-box button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Scrollbar Customization */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Modal Input Nama Toko (Hanya muncul jika belum pernah diset di perangkat ini) -->
+    <div class="modal-overlay" id="storeModal">
+        <div class="modal-box">
+            <h2>Identitas Toko Kasir</h2>
+            <p>Masukkan nama atau ID toko Anda agar riwayat chat tersimpan secara eksklusif dan tidak tercampur.</p>
+            <input type="text" id="modalStoreInput" class="cashier-input" placeholder="Cth: Toko Berkah Jaya / Cabang 01">
+            <button onclick="saveStoreIdentity()">Mulai Bantuan</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-left">
+                <div class="support-avatar">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <div class="header-info">
+                    <h1>Pusat Bantuan</h1>
+                    <p id="activeStoreDisplay">Memuat Toko...</p>
+                </div>
+            </div>
+            <!-- Tombol jika ingin ganti akun/nama toko di kemudian hari -->
+            <button class="store-badge" onclick="changeStoreIdentity()" title="Ganti Toko">
+                <i class="fa-solid fa-right-left"></i> Ganti
+            </button>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-body" id="chatBody">
+            <div class="chat-bubble admin">
+                Halo! Ada kendala pada aplikasi kasir yang Anda gunakan? Sampaikan detail masalahnya di sini, tim pusat akan segera membantu.
+                <span class="chat-time" id="welcomeTime">00:00</span>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="chat-footer">
+            <div class="input-group-row">
+                <select id="issueCategory" class="cashier-input" style="width: 100%;">
+                    <option value="Printer">Struk / Printer Kendala</option>
+                    <option value="Barcode">Scan Barcode Gagal</option>
+                    <option value="Pembayaran">Kendala Pembayaran</option>
+                    <option value="Lainnya">Kendala Lainnya</option>
+                </select>
+            </div>
+            <div class="message-input-container">
+                <textarea id="issueMessage" class="cashier-input" placeholder="Ketik pesan kendala kasir di sini..." onkeypress="handleKeyPress(event)"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="submitReport()">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular v10 via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, update, push, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcvaZATpsbSNtBAuKxuCsvpfLjODc7Cko",
+            authDomain: "asisten-toko.firebaseapp.com",
+            databaseURL: "https://asisten-toko-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "asisten-toko",
+            storageBucket: "asisten-toko.firebasestorage.app",
+            messagingSenderId: "493614445360",
+            appId: "1:493614445360:web:2f235b72bdace6578c8ef5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('welcomeTime').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Cek apakah identitas toko sudah tersimpan di browser perangkat ini
+        let currentStoreId = localStorage.getItem('kasir_store_identity');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!currentStoreId) {
+                document.getElementById('storeModal').style.display = 'flex';
+            } else {
+                document.getElementById('storeModal').style.display = 'none';
+                setupActiveStore(currentStoreId);
+            }
+        });
+
+        window.saveStoreIdentity = function() {
+            const inputVal = document.getElementById('modalStoreInput').value.trim();
+            if (!inputVal) {
+                alert("Harap masukkan nama atau ID toko Anda!");
+                return;
+            }
+            // Bersihkan format string agar aman jadi path firebase (spasi jadi underscore atau hapus karakter khusus)
+            currentStoreId = inputVal.replace(/[.#$\/\[\]]/g, "_");
+            localStorage.setItem('kasir_store_identity', currentStoreId);
+            
+            document.getElementById('storeModal').style.display = 'none';
+            setupActiveStore(currentStoreId);
+        };
+
+        window.changeStoreIdentity = function() {
+            localStorage.removeItem('kasir_store_identity');
+            location.reload();
+        };
+
+        function setupActiveStore(storeId) {
+            document.getElementById('activeStoreDisplay').innerText = `Toko: ${storeId}`;
+            initUserChatListener(storeId);
+        }
+
+        // Fungsi Listener Real-time khusus toko ini
+        function initUserChatListener(storeId) {
+            const chatBody = document.getElementById('chatBody');
+            const reportRef = ref(db, `laporan_kasir/${storeId}`);
+            
+            onValue(reportRef, (snapshot) => {
+                // Reset tampilan chat dengan pesan sapaan awal
+                chatBody.innerHTML = `
+                    <div class="chat-bubble admin">
+                        Halo! Ada kendala pada aplikasi kasir yang Anda gunakan? Sampaikan detail masalahnya di sini, tim pusat akan segera membantu.
+                        <span class="chat-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    // Render data lama (jika ada)
+                    if (data.message && !data.replies) {
+                        const userTime = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+                        appendBubble('user', `<strong>[${data.category || "Kendala"}]</strong><br>${data.message}`, userTime);
+                    }
+
+                    // Render riwayat percakapan interaktif dari node replies
+                    if (data.replies) {
+                        const sortedReplies = Object.values(data.replies).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                        
+                        sortedReplies.forEach(reply => {
+                            const replyTime = reply.timestamp ? new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+                            const bubbleClass = (reply.sender === 'admin') ? 'admin' : 'user';
+                            
+                            let content = reply.message;
+                            if (bubbleClass === 'user' && reply.category) {
+                                content = `<strong>[${reply.category}]</strong><br>${reply.message}`;
+                            }
+                            
+                            appendBubble(bubbleClass, content, replyTime);
+                        });
+                    }
+                }
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
+        function appendBubble(senderClass, htmlContent, timeString) {
+            const chatBody = document.getElementById('chatBody');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${senderClass}`;
+            bubble.innerHTML = `
+                ${htmlContent}
+                <span class="chat-time">${timeString}</span>
+            `;
+            chatBody.appendChild(bubble);
+        }
+
+        // Kirim pesan laporan
+        window.submitReport = async function() {
+            if (!currentStoreId) return;
+
+            const category = document.getElementById('issueCategory').value;
+            const message = document.getElementById('issueMessage').value.trim();
+
+            if (!message) {
+                alert("Silakan ketik deskripsi masalah terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('issueMessage').value = '';
+
+            try {
+                // Masukkan ke database ke jalur eksklusif toko ini menggunakan push()
+                const repliesRef = ref(db, `laporan_kasir/${currentStoreId}/replies`);
+                await push(repliesRef, {
+                    sender: "user",
+                    category: category,
+                    message: message,
+                    timestamp: serverTimestamp()
+                });
+
+                const mainReportRef = ref(db, `laporan_kasir/${currentStoreId}`);
+                await update(mainReportRef, {
+                    cashierId: currentStoreId,
+                    category: category,
+                    message: message,
+                    timestamp: serverTimestamp(),
+                    status: 'pending'
+                });
+
+            } catch (error) {
+                console.error("Gagal mengirim laporan: ", error);
+                alert("Gagal mengirim pesan. Periksa koneksi internet Anda.");
+            }
+        };
+
+        window.handleKeyPress = function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitReport();
+            }
+        };
+    </script>
+</body>
+</html>
