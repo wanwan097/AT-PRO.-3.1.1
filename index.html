@@ -434,7 +434,6 @@
             modalBtn.className = `modal-btn ${btnClass}`;
             modalOverlay.classList.add('active');
 
-            // Hapus listener lama
             modalBtn.onclick = null;
             modalBtn.onclick = () => {
                 modalOverlay.classList.remove('active');
@@ -442,7 +441,6 @@
             };
         }
 
-        // Fungsi untuk menutup modal secara paksa (jika perlu)
         function closeModal() {
             modalOverlay.classList.remove('active');
         }
@@ -469,7 +467,6 @@
                 document.querySelector('.admin-seed-group').classList.remove('active');
                 adminSeed.value = '';
             }
-            // Re-attach
             document.getElementById('toggleAction').addEventListener('click', toggleForm);
         }
 
@@ -522,10 +519,8 @@
                     createdAt: serverTimestamp()
                 });
 
-                // Logout otomatis agar user harus login ulang
                 await signOut(auth);
 
-                // Tampilkan modal sukses dan arahkan ke login
                 showModal(
                     '🎉',
                     'Pendaftaran Berhasil!',
@@ -533,12 +528,9 @@
                     'OK, Login',
                     'success',
                     () => {
-                        // Isi email di form login
                         loginEmail.value = email;
                         loginPassword.value = '';
-                        // Pindah ke tampilan login
                         if (!isLogin) toggleForm();
-                        // Fokus ke password
                         loginPassword.focus();
                     }
                 );
@@ -557,7 +549,7 @@
         });
 
         // ============================================================
-        // 7. LOGIN
+        // 7. LOGIN (DENGAN LOGOUT OTOMATIS)
         // ============================================================
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -572,19 +564,21 @@
             setLoading(loginBtn, true);
 
             try {
+                // 🔥 PERBAIKAN: Logout otomatis jika ada user yang sedang login
+                if (auth.currentUser) {
+                    await signOut(auth);
+                    // Tunggu sebentar agar proses logout selesai
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                // Sukses login, biarkan onAuthStateChanged menangani redirect
-                // Tapi kita tampilkan modal sukses sebentar
                 showModal(
                     '✅',
                     'Login Berhasil',
                     'Selamat datang kembali! Mengarahkan ke dashboard...',
                     'OK',
                     'success',
-                    () => {
-                        // Redirect akan ditangani oleh onAuthStateChanged
-                        // Tapi jika belum, kita biarkan
-                    }
+                    () => {}
                 );
                 loginForm.reset();
             } catch (error) {
@@ -593,6 +587,7 @@
                 if (error.code === 'auth/user-not-found') msg += 'Email tidak terdaftar.';
                 else if (error.code === 'auth/wrong-password') msg += 'Password salah.';
                 else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
+                else if (error.code === 'auth/too-many-requests') msg += 'Terlalu banyak percobaan. Coba lagi nanti.';
                 else msg += error.message;
                 showModal('❌', 'Login Gagal', msg, 'Coba Lagi', 'danger');
             } finally {
@@ -616,12 +611,10 @@
                     const data = userDoc.data();
                     const role = data.role || 'owner';
 
-                    // Update lastLogin
                     await updateDoc(doc(db, 'users', user.uid), {
                         lastLogin: new Date().toISOString()
                     });
 
-                    // Redirect
                     let targetPage = '';
                     switch (role) {
                         case 'super_admin':
@@ -637,7 +630,6 @@
                             targetPage = 'dashboard.html';
                     }
 
-                    // Tampilkan modal info sebentar lalu redirect
                     showModal(
                         '🚀',
                         `Selamat Datang, ${data.name || 'User'}!`,
@@ -654,11 +646,8 @@
                     showModal('❌', 'Kesalahan Sistem', 'Gagal memuat data user. Silakan coba lagi.', 'OK', 'danger');
                 }
             } else {
-                // User logout - tutup modal jika terbuka
                 closeModal();
-                // Hapus tombol logout tambahan jika ada
                 document.querySelectorAll('.container .btn:not(#loginBtn):not(#registerBtn)').forEach(btn => btn.remove());
-                // Reset form
                 loginForm.reset();
                 registerForm.reset();
                 if (!isLogin) toggleForm();
